@@ -71,7 +71,12 @@ code,.mono{font-family:var(--f-mono);font-size:.92em}
 /* keyboards */
 .kb-scroll{overflow-x:auto;border-radius:10px;-webkit-overflow-scrolling:touch}
 .kb{position:relative;user-select:none;touch-action:manipulation}
-.kb.main{height:150px;min-width:840px}
+.kb.main{height:150px}
+.picker{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center}
+.picker label{font-weight:700}
+select,.picker input{font:15px var(--f-body);padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);max-width:100%}
+.picker input{width:4.2em;font-family:var(--f-mono);text-transform:uppercase}
+select:focus-visible{outline:3px solid var(--cmark);outline-offset:2px}
 .kb.mini{height:130px}
 .key{position:absolute;top:0;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding-bottom:7px;transition:background-color .08s}
 .key.w{height:100%;background:var(--ivory);border:1px solid var(--ivory-edge);border-top:none;border-radius:0 0 6px 6px;z-index:1;color:#3b4252}
@@ -138,7 +143,7 @@ input[type=range]{accent-color:var(--rh);width:140px}
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">Yamaha PSR-F52 · 61 keys · C2 to C7</div>
+    <div class="eyebrow" id="kbInfo">61 keys · C2 to C7</div>
     <h1>Piano Tab Trainer</h1>
     <p class="lede">Read piano like you read guitar tabs: a note letter plus an octave number. Paste letter notes from any tutorial, then watch the keys light up and play along at your own speed.</p>
   </header>
@@ -153,13 +158,34 @@ input[type=range]{accent-color:var(--rh);width:140px}
         <li>The white key directly to the <b>left</b> of that pair is <b>C</b>. Every pair of black keys has a C just before it.</li>
         <li>From C, the white keys go <span class="mono">C D E F G A B</span>, then C again.</li>
       </ol>
-      <p class="muted">On your PSR-F52 the very first key on the left is a C. Count the Cs from the left: the third one is <b style="color:var(--cmark)">middle C (C4)</b>, roughly in the middle of the keyboard.</p>
+      <p class="muted" id="midHelp"></p>
       <div class="row"><button id="showC" type="button">Light up every C below</button></div>
     </div>
     <div class="mini-wrap"><div class="kb mini" id="mini" aria-label="Two octaves with every note labelled"></div></div>
   </section>
 
   <section class="card" aria-label="Keyboard">
+    <div class="picker">
+      <label for="size">Your keyboard</label>
+      <select id="size">
+        <option value="25">25 keys (C3 to C5) · mini controllers</option>
+        <option value="32">32 keys (F2 to C5)</option>
+        <option value="37">37 keys (C3 to C6) · e.g. Yamaha PSS-A50</option>
+        <option value="49">49 keys (C2 to C6)</option>
+        <option value="61" selected>61 keys (C2 to C7) · e.g. Yamaha PSR-F52, PSR-E373</option>
+        <option value="76">76 keys (E1 to G7) · e.g. Yamaha PSR-EW310</option>
+        <option value="88">88 keys (A0 to C8) · full piano, e.g. Yamaha P-45</option>
+        <option value="custom">Custom range…</option>
+      </select>
+      <span class="row" id="customBox" hidden>
+        <input id="lowKey" value="C2" maxlength="3" aria-label="Lowest key, like C2">
+        <span class="muted">to</span>
+        <input id="highKey" value="C7" maxlength="3" aria-label="Highest key, like C7">
+        <button id="applyRange" type="button">Apply</button>
+      </span>
+      <p class="warn" id="rangeErr" hidden></p>
+    </div>
+    <p class="muted" style="font-size:14px;margin-top:-6px">Not sure? Count the keys on your instrument, white and black together. For a custom range, enter the note name of the lowest and highest white key.</p>
     <div class="kb-bar">
       <div class="legend">
         <span><i class="dot" style="background:var(--rh)"></i>Right hand</span>
@@ -220,7 +246,7 @@ input[type=range]{accent-color:var(--rh);width:140px}
       <section class="card" aria-labelledby="c1">
         <h2 id="c1">Tab format</h2>
         <div class="cheat">
-          <code>C4</code><span>Note C in octave 4 (middle C)</span>
+          <code>C4</code><span>Note C in octave 4 (middle C). Some keyboard manuals, including Yamaha's, call this C3.</span>
           <code>F#3 Bb3</code><span>Black keys: # is the one to the right, b the one to the left</span>
           <code>-</code><span>Hold the previous note one more beat</span>
           <code>.</code><span>Rest (silence) for one beat</span>
@@ -245,7 +271,10 @@ const PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
 const NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const isBlack=m=>[1,3,6,8,10].includes(m%12);
 const name=m=>NAMES[m%12]+(Math.floor(m/12)-1);
-const LO=36,HI=96,MIDC=60;
+const MIDC=60;
+const PRESETS={25:[48,72],32:[41,72],37:[48,84],49:[36,84],61:[36,96],76:[28,103],88:[21,108]};
+let LO=36,HI=96;
+try{ const s=JSON.parse(localStorage.getItem('kbRange')); if(s&&s.lo>=21&&s.hi<=108&&s.hi-s.lo>=11&&!isBlack(s.lo)&&!isBlack(s.hi)){ LO=s.lo; HI=s.hi; } }catch(e){}
 
 /* audio */
 let ctx,master;
@@ -305,6 +334,8 @@ function build(el,lo,hi,opts){
       g.style.left=((pos[m]+.55)*ww)+'%'; g.style.width=((n-.1)*ww)+'%'; el.appendChild(g);
       const t=document.createElement('span'); t.textContent=n; t.style.cssText='position:absolute;top:-20px;left:50%;transform:translateX(-50%);font:600 12px var(--f-mono);color:var(--muted)'; g.appendChild(t);} }
   }
+  if(!opts.mini) el.style.minWidth=(whites*24)+'px';
+  if(el.dataset.bound) return map; el.dataset.bound='1';
   el.addEventListener('pointerdown',e=>{ const k=e.target.closest('.key'); if(!k)return; const m=+k.dataset.m; press(m,k,opts.mini); });
   el.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('key')){ e.preventDefault(); press(+e.target.dataset.m,e.target,opts.mini);} });
   return map;
@@ -312,14 +343,49 @@ function build(el,lo,hi,opts){
 function press(m,k,mini){ tone(m,.5); if(!mini && drill.active){ judge(m,k); return; }
   k.classList.add('rh'); setTimeout(()=>k.classList.remove('rh'),220); }
 
-const keys=build(document.getElementById('kb'),LO,HI,{focus:true});
-build(document.getElementById('mini'),48,71,{mini:true});
 const kbEl=document.getElementById('kb'), scroller=document.getElementById('kbScroll');
+let keys=build(kbEl,LO,HI,{focus:true});
+build(document.getElementById('mini'),48,71,{mini:true});
 
 function centerOn(m){ const k=keys.get(m); if(!k)return; const kr=k.getBoundingClientRect(), sr=scroller.getBoundingClientRect();
   if(kr.left<sr.left+20||kr.right>sr.right-20) scroller.scrollLeft+= (kr.left+kr.width/2)-(sr.left+sr.width/2); }
-function center(){ const k=keys.get(MIDC); scroller.scrollLeft=k.offsetLeft-scroller.clientWidth/2; }
+function center(){ const k=keys.get(MIDC); scroller.scrollLeft=k?k.offsetLeft-scroller.clientWidth/2:(scroller.scrollWidth-scroller.clientWidth)/2; }
 requestAnimationFrame(center);
+
+/* keyboard size */
+const ORD=['first','second','third','fourth','fifth','sixth'];
+function describeRange(){
+  document.getElementById('kbInfo').textContent=(HI-LO+1)+' keys · '+name(LO)+' to '+name(HI);
+  const first=NAMES[LO%12], an=/^[AEF]/.test(first)?'an':'a';
+  let cs=0; for(let m=LO;m<=MIDC;m++) if(m%12===0) cs++;
+  const help=document.getElementById('midHelp');
+  if(MIDC<LO||MIDC>HI){ help.textContent='This keyboard range does not include middle C (C4), so tabs written around middle C will fall outside it.'; return; }
+  help.innerHTML='On your keyboard, the very first key on the left is '+an+' <b>'+first+'</b>. Count the Cs from the left: the '+ORD[cs-1]+' one is <b style="color:var(--cmark)">middle C (C4)</b>, roughly in the middle of the keyboard.';
+}
+const sizeSel=document.getElementById('size'), customBox=document.getElementById('customBox'), rangeErr=document.getElementById('rangeErr');
+function syncPicker(){ const p=Object.keys(PRESETS).find(k=>PRESETS[k][0]===LO&&PRESETS[k][1]===HI);
+  sizeSel.value=p||'custom'; customBox.hidden=!!p;
+  document.getElementById('lowKey').value=name(LO); document.getElementById('highKey').value=name(HI); }
+function setRange(lo,hi){
+  LO=lo; HI=hi; if(typeof stop==='function'){ stop(); endDrill(); idx=0; }
+  kbEl.innerHTML=''; keys=build(kbEl,LO,HI,{focus:true});
+  describeRange(); if(typeof render==='function') render(); requestAnimationFrame(center);
+  try{ localStorage.setItem('kbRange',JSON.stringify({lo:LO,hi:HI})); }catch(e){}
+}
+sizeSel.addEventListener('change',()=>{ rangeErr.hidden=true;
+  if(sizeSel.value==='custom'){ customBox.hidden=false; document.getElementById('lowKey').focus(); return; }
+  customBox.hidden=true; setRange(...PRESETS[sizeSel.value]); });
+document.getElementById('applyRange').addEventListener('click',()=>{
+  const lo=parseNote(document.getElementById('lowKey').value.trim().replace(/^([a-g])/,c=>c.toUpperCase()));
+  const hi=parseNote(document.getElementById('highKey').value.trim().replace(/^([a-g])/,c=>c.toUpperCase()));
+  let err='';
+  if(lo===null||hi===null) err='Enter notes like C2 and C7: a letter from A to G followed by an octave number.';
+  else if(isBlack(lo)||isBlack(hi)) err='Use white keys for the ends of the range (no # or b).';
+  else if(lo<21||hi>108) err='The range has to fit within a full 88-key piano (A0 to C8).';
+  else if(hi-lo<11) err='The highest key has to be at least an octave above the lowest.';
+  rangeErr.hidden=!err; rangeErr.textContent=err;
+  if(!err) setRange(lo,hi); });
+describeRange(); syncPicker();
 
 document.getElementById('names').addEventListener('change',e=>kbEl.classList.toggle('names',e.target.checked));
 const showC=document.getElementById('showC');
@@ -335,7 +401,7 @@ function parseHand(str){ const out={beats:[],bars:new Set()};
       if(part){ let tok;
         if(part==='-') tok={type:'hold',text:'-'};
         else if(part==='.') tok={type:'rest',text:'.'};
-        else { const ms=part.split('+').map(parseNote); tok=ms.every(x=>x!==null&&x>=LO&&x<=HI)?{type:'note',midis:ms,text:part}:{type:'bad',text:part}; }
+        else { const ms=part.split('+').map(parseNote); tok=ms.every(x=>x!==null&&x>=21&&x<=108)?{type:'note',midis:ms,text:part}:{type:'bad',text:part}; }
         out.beats.push(tok); }
       if(pi<arr.length-1) out.bars.add(out.beats.length);
     });
@@ -352,16 +418,20 @@ function parse(text){ let rh='',lh='',plain=[];
 /* tab view */
 const ta=document.getElementById('tab'), view=document.getElementById('view'), warn=document.getElementById('warn');
 let song, cols=[];
-function render(){ song=parse(ta.value); view.innerHTML=''; cols=[]; const hasL=song.lh.beats.length>0; let bad=[];
+function render(){ song=parse(ta.value); view.innerHTML=''; cols=[]; const hasL=song.lh.beats.length>0; let bad=[], out=[];
   for(let i=0;i<song.n;i++){
     if(i>0&&(song.rh.bars.has(i)||song.lh.bars.has(i))){ const b=document.createElement('div'); b.className='bar'; view.appendChild(b); }
     const c=document.createElement('div'); c.className='col';
     [['rh','r'],['lh','l']].forEach(([h,cl])=>{ if(h==='lh'&&!hasL)return; const t=song[h].beats[i]; const s=document.createElement('span');
-      s.className=cl+(t&&t.type==='bad'?' err':'')+(t&&t.type!=='note'?' h':''); s.textContent=t?t.text:' '; if(t&&t.type==='bad')bad.push(t.text); c.appendChild(s); });
+      const off=t&&t.type==='note'&&t.midis.some(m=>m<LO||m>HI); if(off) out.push(t.text);
+      s.className=cl+(t&&t.type==='bad'||off?' err':'')+(t&&t.type!=='note'?' h':''); s.textContent=t?t.text:' '; if(t&&t.type==='bad')bad.push(t.text); c.appendChild(s); });
     view.appendChild(c); cols.push(c);
   }
   if(!song.n) view.innerHTML='<span class="muted">Paste some notes above, like <code>C4 D4 E4</code>.</span>';
-  warn.hidden=!bad.length; if(bad.length) warn.textContent='Not recognised (played as silence): '+[...new Set(bad)].slice(0,6).join(', ')+'. Use a letter, optional # or b, and an octave from 2 to 7, like F#4.';
+  const msgs=[];
+  if(bad.length) msgs.push('Not recognised (played as silence): '+[...new Set(bad)].slice(0,6).join(', ')+'. Use a letter, optional # or b, and an octave number, like F#4.');
+  if(out.length) msgs.push('Outside your keyboard ('+name(LO)+' to '+name(HI)+'): '+[...new Set(out)].slice(0,6).join(', ')+'. They still play here, but your keyboard cannot reach them. Try the same notes an octave higher or lower.');
+  warn.hidden=!msgs.length; warn.textContent=msgs.join(' ');
 }
 ta.value=SAMPLE; render(); ta.addEventListener('input',()=>{ stop(); idx=0; render(); });
 
@@ -376,7 +446,7 @@ function holdLen(h,i){ let n=1; const b=song[h].beats; while(b[i+n]&&b[i+n].type
 function playBeat(i,sustainLights){ mark(i);
   ['rh','lh'].forEach(h=>{ const t=song[h].beats[i]; if(!t||t.type!=='note')return;
     const dur=holdLen(h,i)*beatMs();
-    t.midis.forEach(m=>{ tone(m,dur/1000*.95); const k=keys.get(m); k.classList.add(h); centerOn(m);
+    t.midis.forEach(m=>{ tone(m,dur/1000*.95); const k=keys.get(m); if(!k) return; k.classList.add(h); centerOn(m);
       if(!sustainLights) setTimeout(()=>k.classList.remove(h),dur*.9); }); }); }
 function tick(){ if(!playing)return;
   if(idx>=song.n){ if(document.getElementById('loop').checked) idx=0; else { stop(); idx=0; return; } }
@@ -394,7 +464,8 @@ document.getElementById('restart').addEventListener('click',()=>{ stop(); idx=0;
 const drill={active:false,target:null,tries:0,score:0,streak:0};
 const tEl=document.getElementById('target'), fb=document.getElementById('fb'), dBtn=document.getElementById('drill');
 function nice(m){ return name(m).replace('#','♯'); }
-function newTarget(){ const pool=[]; for(let m=48;m<=72;m++) if(document.getElementById('blacks').checked||!isBlack(m)) pool.push(m);
+function newTarget(){ const pool=[]; let a=Math.max(LO,48), b=Math.min(HI,72); if(b-a<11){ a=LO; b=HI; }
+  for(let m=a;m<=b;m++) if(document.getElementById('blacks').checked||!isBlack(m)) pool.push(m);
   let t; do{ t=pool[Math.floor(Math.random()*pool.length)]; }while(t===drill.target&&pool.length>1);
   drill.target=t; drill.tries=0; tEl.textContent=nice(t); fb.className='feedback'; fb.textContent='Find it on the keyboard.'; clearLit(); centerOn(t); }
 function score(){ document.getElementById('sc').textContent='Right '+drill.score; document.getElementById('st').textContent='Streak '+drill.streak; }

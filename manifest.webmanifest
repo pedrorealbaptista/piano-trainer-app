@@ -1,7 +1,7 @@
 {
   "name": "Piano Tab Trainer",
   "short_name": "Piano Tabs",
-  "description": "Play letter-note piano tabs and MIDI files on a 61-key keyboard, step by step.",
+  "description": "Play letter-note piano tabs and MIDI files on a keyboard matched to yours (25 to 88 keys), step by step.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
