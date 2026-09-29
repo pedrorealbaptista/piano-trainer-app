@@ -134,6 +134,20 @@ input[type=range]{accent-color:var(--rh);width:140px}
 .cheat code{color:var(--rh);white-space:nowrap}
 
 /* drill */
+.chord-groups{display:grid;gap:10px}
+.cgroup{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cgroup .glabel{font:600 11px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);width:6.5em}
+.chip{font:600 15px/1 var(--f-mono);min-width:3.4em;padding:10px 12px}
+.chip[aria-pressed="true"]{background:var(--rh);border-color:var(--rh);color:#fff}
+.chord-layout{display:grid;grid-template-columns:1fr 1.2fr;gap:22px;align-items:center}
+@media (max-width:760px){.chord-layout{grid-template-columns:1fr}}
+.chord-info{display:grid;gap:8px;min-width:0}
+.chord-name{font:700 48px/1 var(--f-display);letter-spacing:-.02em}
+.chord-notes{display:flex;flex-wrap:wrap;gap:6px}
+.chord-notes span{font:600 14px var(--f-mono);padding:5px 9px;border-radius:6px;background:var(--rh-soft);color:var(--ink)}
+.tabsnip{font:600 15px var(--f-mono);padding:8px 10px;border-radius:8px;background:var(--bg);color:var(--rh);user-select:all;overflow-wrap:anywhere}
+.chord-kb{padding-top:0}
+.chord-kb .key.w.is-c{background:var(--ivory)}
 .target{font:700 64px/1 var(--f-display);font-variant-numeric:tabular-nums;letter-spacing:-.02em;text-align:center;padding:10px 0}
 .score{display:flex;justify-content:center;gap:22px;font:600 14px var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
 .feedback{text-align:center;min-height:1.5em;font-weight:700}
@@ -258,6 +272,33 @@ input[type=range]{accent-color:var(--rh);width:140px}
     </div>
   </div>
 
+  <section class="card" aria-labelledby="ch1">
+    <div class="eyebrow">Harmony</div>
+    <h2 id="ch1">Common chords</h2>
+    <p class="muted" style="max-width:66ch">Tap a chord to hear it and see its keys. With your right hand, play a three-note chord with your thumb, middle finger and little finger. The same chords are lit on the big keyboard above.</p>
+    <div class="chord-groups" id="common"></div>
+    <div class="picker">
+      <label for="root">Any chord</label>
+      <select id="root" aria-label="Root note"></select>
+      <select id="ctype" aria-label="Chord type"></select>
+    </div>
+    <div class="chord-layout">
+      <div class="chord-info" aria-live="polite">
+        <div class="chord-name" id="chName">C</div>
+        <div class="muted" id="chFull">C major</div>
+        <div class="chord-notes" id="chNotes"></div>
+        <p class="muted" id="chFormula" style="font-size:14px"></p>
+        <div class="row">
+          <code class="tabsnip" id="chTab">C4+E4+G4</code>
+          <button id="chCopy" type="button">Copy</button>
+          <button id="chPlay" type="button">Play again</button>
+        </div>
+        <p class="muted" style="font-size:14px">Left hand: play just the first note of the chord, one or two octaves lower, while the right hand plays the chord.</p>
+      </div>
+      <div class="mini-wrap chord-kb"><div class="kb mini" id="chordKb" aria-label="Chord keys"></div></div>
+    </div>
+  </section>
+
   <footer class="muted" style="font-size:13px">Piano sound: <a href="https://github.com/Tonejs/audio/tree/master/salamander" style="color:inherit">Salamander Grand Piano</a> by Alexander Holm, licensed <a href="https://creativecommons.org/licenses/by/3.0/" style="color:inherit">CC BY 3.0</a>.</footer>
 </div>
 
@@ -328,7 +369,7 @@ function build(el,lo,hi,opts){
     if(m===MIDC){ const d=document.createElement('i'); d.className='midc'; d.title='Middle C'; k.appendChild(d); }
     el.appendChild(k); map.set(m,k);
   }
-  if(opts.mini){ // brackets over the 2- and 3-black-key groups
+  if(opts.mini&&!opts.noGroups){ // brackets over the 2- and 3-black-key groups
     let w=0; const pos={}; for(let m=lo;m<=hi;m++){ if(!isBlack(m)){pos[m]=w;w++;} }
     for(let m=lo;m<=hi;m++){ if(m%12===0||m%12===5){ const n=m%12===0?2:3; const g=document.createElement('div'); g.className='grp';
       g.style.left=((pos[m]+.55)*ww)+'%'; g.style.width=((n-.1)*ww)+'%'; el.appendChild(g);
@@ -478,6 +519,59 @@ function judge(m,k){ if(m===drill.target){ drill.score++; drill.streak++; k.clas
 function endDrill(){ if(!drill.active)return; drill.active=false; dBtn.textContent='Start'; clearLit(); fb.className='feedback'; fb.textContent='Paused. Press Start to continue.'; }
 dBtn.addEventListener('click',()=>{ if(drill.active){ endDrill(); return; } stop(); audio(); drill.active=true; dBtn.textContent='Stop'; newTarget(); });
 document.getElementById('blacks').addEventListener('change',()=>{ if(drill.active) newTarget(); });
+
+/* chords */
+const CH_TYPES=[['','major',[0,4,7]],['m','minor',[0,3,7]],['7','seventh (dominant 7)',[0,4,7,10]],['maj7','major seventh',[0,4,7,11]],['m7','minor seventh',[0,3,7,10]],['sus2','suspended 2nd',[0,2,7]],['sus4','suspended 4th',[0,5,7]],['dim','diminished',[0,3,6]]];
+const ROOTS=[['C',0],['C#',1],['D',2],['Eb',3],['E',4],['F',5],['F#',6],['G',7],['Ab',8],['A',9],['Bb',10],['B',11]];
+const FLATNAMES=['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const COMMON=[['Major',['C','D','E','F','G','A','Bb']],['Minor',['Am','Bm','Dm','Em']],['Seventh',['A7','D7','E7','G7']]];
+const pretty=s=>s.replace(/#/g,'♯').replace(/([A-G])b/g,'$1♭');
+const chordKeys=build(document.getElementById('chordKb'),60,83,{mini:true,noGroups:true});
+const rootSel=document.getElementById('root'), typeSel=document.getElementById('ctype');
+ROOTS.forEach(([n])=>rootSel.add(new Option(pretty(n),n)));
+CH_TYPES.forEach(([s,full])=>typeSel.add(new Option(full[0].toUpperCase()+full.slice(1),s)));
+const commonEl=document.getElementById('common'), chips=[];
+COMMON.forEach(([label,list])=>{ const g=document.createElement('div'); g.className='cgroup';
+  const l=document.createElement('span'); l.className='glabel'; l.textContent=label; g.appendChild(l);
+  list.forEach(sym=>{ const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=pretty(sym); b.dataset.sym=sym;
+    b.setAttribute('aria-pressed','false'); b.addEventListener('click',()=>showChord(sym,true)); g.appendChild(b); chips.push(b); });
+  commonEl.appendChild(g); });
+let chordLit=[], curChord=null;
+function spell(m,useFlats){ const pc=m%12; return (useFlats?FLATNAMES[pc]:NAMES[pc])+(Math.floor(m/12)-1); }
+function showChord(sym,sound){
+  const r=/^([A-G][#b]?)(.*)$/.exec(sym); const root=ROOTS.find(x=>x[0]===r[1]); const type=CH_TYPES.find(t=>t[0]===r[2]);
+  if(!root||!type) return;
+  const minorish=/^(m|m7|dim)$/.test(type[0]);
+  const useFlats=/b$/.test(root[0])||root[0]==='F'||(minorish&&['C','D','G'].includes(root[0]))||(type[0]==='7'&&root[0]==='C');
+  const midis=type[2].map(iv=>60+root[1]+iv);
+  curChord=midis; rootSel.value=root[0]; typeSel.value=type[0];
+  chips.forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.sym===sym)));
+  const names=midis.map(m=>spell(m,useFlats));
+  document.getElementById('chName').textContent=pretty(sym);
+  document.getElementById('chFull').textContent=pretty(root[0])+' '+type[1];
+  const notesEl=document.getElementById('chNotes'); notesEl.innerHTML='';
+  names.forEach(n=>{ const s=document.createElement('span'); s.textContent=pretty(n.replace(/\d/,'')); notesEl.appendChild(s); });
+  const steps=type[2].slice(1).map((iv,i)=>iv-type[2][i]);
+  document.getElementById('chFormula').textContent='Start on '+pretty(root[0])+', then move up '+steps.join(' keys, then ')+' keys, counting black keys too.';
+  document.getElementById('chTab').textContent=names.join('+');
+  chordLit.forEach(([k,c])=>k.classList.remove(c)); chordLit=[];
+  midis.forEach(m=>{ const k=chordKeys.get(m); if(k){ k.classList.add('rh'); chordLit.push([k,'rh']); } });
+  if(!sound) return;
+  // main keyboard: move down an octave if the chord does not fit this keyboard
+  let shift=0; while(Math.max(...midis)+shift>HI&&Math.min(...midis)+shift-12>=LO) shift-=12;
+  while(Math.min(...midis)+shift<LO&&Math.max(...midis)+shift+12<=HI) shift+=12;
+  midis.forEach(m=>{ const k=keys.get(m+shift); if(k){ k.classList.add('rh'); chordLit.push([k,'rh']); } });
+  playChord();
+}
+function playChord(){ if(!curChord) return; stop(); endDrill(); curChord.forEach(m=>tone(m,1.4)); }
+function pickChord(){ showChord(rootSel.value+typeSel.value,true); }
+rootSel.addEventListener('change',pickChord); typeSel.addEventListener('change',pickChord);
+document.getElementById('chPlay').addEventListener('click',playChord);
+document.getElementById('chCopy').addEventListener('click',e=>{ const t=document.getElementById('chTab'), btn=e.currentTarget;
+  const done=()=>{ btn.textContent='Copied'; setTimeout(()=>btn.textContent='Copy',1200); };
+  const fallback=()=>{ const rg=document.createRange(); rg.selectNodeContents(t); const s=getSelection(); s.removeAllRanges(); s.addRange(rg); btn.textContent='Selected, copy it'; setTimeout(()=>btn.textContent='Copy',1800); };
+  try{ navigator.clipboard.writeText(t.textContent).then(done,fallback); }catch(err){ fallback(); } });
+showChord('C',false);
 
 /* file import */
 const fileIn=document.getElementById('file'), drop=document.getElementById('drop'), status=document.getElementById('status');
