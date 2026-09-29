@@ -171,6 +171,7 @@ input[type=range]{accent-color:var(--rh);width:140px}
   <nav class="tabs" role="tablist" aria-label="Sections">
     <button type="button" role="tab" id="t-intro" aria-controls="p-intro" data-tab="intro">Intro</button>
     <button type="button" role="tab" id="t-player" aria-controls="p-player" data-tab="player">Player</button>
+    <button type="button" role="tab" id="t-practice" aria-controls="p-practice" data-tab="practice">Practice</button>
     <button type="button" role="tab" id="t-chords" aria-controls="p-chords" data-tab="chords">Chords Showdown</button>
   </nav>
 
@@ -209,7 +210,7 @@ input[type=range]{accent-color:var(--rh);width:140px}
   </div>
 
   <div class="panel" id="p-player" role="tabpanel" aria-labelledby="t-player" hidden>
-  <section class="card" aria-label="Keyboard">
+  <section class="card" aria-label="Keyboard" id="kbCard">
     <div class="picker">
       <label for="size">Your keyboard</label>
       <select id="size">
@@ -247,51 +248,48 @@ input[type=range]{accent-color:var(--rh);width:140px}
     <p class="muted" style="font-size:14px">Click or tap any key to hear it. On a phone, swipe the keyboard sideways.</p>
   </section>
 
-  <div class="cols">
-    <section class="card" aria-labelledby="p1">
-      <div class="eyebrow">Play along</div>
-      <h2 id="p1">Tab player</h2>
-      <div class="drop" id="drop">
-        <div class="row">
-          <button id="openBtn" type="button">Open a file</button>
-          <span class="muted" style="font-size:14px">or drop one here · <span class="mono">.txt</span> tabs or <span class="mono">.mid</span> MIDI</span>
-        </div>
-        <input type="file" id="file" accept=".txt,.text,.md,.tab,.mid,.midi,text/plain,audio/midi,audio/x-midi" hidden>
-        <p class="status" id="status" hidden></p>
-      </div>
-      <textarea id="tab" spellcheck="false" aria-label="Letter-note tab"></textarea>
+  <section class="card" aria-labelledby="p1">
+    <div class="eyebrow">Play along</div>
+    <h2 id="p1">Tab player</h2>
+    <div class="drop" id="drop">
       <div class="row">
-        <button class="primary" id="play" type="button">Play</button>
-        <button id="step" type="button">Next note</button>
-        <button id="restart" type="button">Restart</button>
-        <label class="chk"><input type="checkbox" id="loop"> Loop</label>
+        <button id="openBtn" type="button">Open a file</button>
+        <span class="muted" style="font-size:14px">or drop one here · <span class="mono">.txt</span> tabs or <span class="mono">.mid</span> MIDI</span>
       </div>
-      <div class="row">
-        <span class="muted" style="font-size:14px">Speed</span>
-        <input type="range" id="bpm" min="30" max="240" value="80" aria-label="Speed in steps per minute">
-        <span class="tempo" id="bpmOut">80 BPM</span>
-      </div>
-      <div class="tabview" id="view" aria-live="off"></div>
-      <p class="warn" id="warn" hidden></p>
-      <p class="muted" style="font-size:14px">The example is <i>Ode to Joy</i> (Beethoven). Replace it with notes from a tutorial, or open a file. <b>Next note</b> is the best way to learn: it waits for you.</p>
-    </section>
-
-    <div style="display:grid;gap:22px;align-content:start;min-width:0">
-      <section class="card" aria-labelledby="d1">
-        <div class="eyebrow">Practice</div>
-        <h2 id="d1">Key finder</h2>
-        <div class="target" id="target">C4</div>
-        <div class="feedback" id="fb">Press Start, then click that key.</div>
-        <div class="score"><span id="sc">Right 0</span><span id="st">Streak 0</span></div>
-        <div class="row" style="justify-content:center">
-          <button class="primary" id="drill" type="button">Start</button>
-          <label class="chk"><input type="checkbox" id="blacks"> Include black keys</label>
-        </div>
-      </section>
-
+      <input type="file" id="file" accept=".txt,.text,.md,.tab,.mid,.midi,text/plain,audio/midi,audio/x-midi" hidden>
+      <p class="status" id="status" hidden></p>
     </div>
+    <textarea id="tab" spellcheck="false" aria-label="Letter-note tab"></textarea>
+    <div class="row">
+      <button class="primary" id="play" type="button">Play</button>
+      <button id="step" type="button">Next note</button>
+      <button id="restart" type="button">Restart</button>
+      <label class="chk"><input type="checkbox" id="loop"> Loop</label>
+    </div>
+    <div class="row">
+      <span class="muted" style="font-size:14px">Speed</span>
+      <input type="range" id="bpm" min="30" max="240" value="80" aria-label="Speed in steps per minute">
+      <span class="tempo" id="bpmOut">80 BPM</span>
+    </div>
+    <div class="tabview" id="view" aria-live="off"></div>
+    <p class="warn" id="warn" hidden></p>
+    <p class="muted" style="font-size:14px">The example is <i>Ode to Joy</i> (Beethoven). Replace it with notes from a tutorial, or open a file. <b>Next note</b> is the best way to learn: it waits for you.</p>
+  </section>
+
   </div>
 
+  <div class="panel" id="p-practice" role="tabpanel" aria-labelledby="t-practice" hidden>
+  <section class="card" aria-labelledby="d1">
+    <div class="eyebrow">Practice</div>
+    <h2 id="d1">Key finder</h2>
+    <div class="target" id="target">C4</div>
+    <div class="feedback" id="fb">Press Start, then tap that key on the keyboard above.</div>
+    <div class="score"><span id="sc">Right 0</span><span id="st">Streak 0</span></div>
+    <div class="row" style="justify-content:center">
+      <button class="primary" id="drill" type="button">Start</button>
+      <label class="chk"><input type="checkbox" id="blacks"> Include black keys</label>
+    </div>
+  </section>
   </div>
 
   <div class="panel" id="p-chords" role="tabpanel" aria-labelledby="t-chords" hidden>
@@ -459,15 +457,17 @@ cHi.addEventListener('change',()=>kbEl.classList.toggle('show-c',cHi.checked));
 showC.addEventListener('click',()=>{ cHi.checked=true; kbEl.classList.add('show-c'); showTab('player'); scroller.parentElement.scrollIntoView({block:'center'}); });
 
 /* tabs */
-const TABS=['intro','player','chords'], tabBtns=[...document.querySelectorAll('.tabs [role=tab]')];
-let curTab=null, centered=false;
+const TABS=['intro','player','practice','chords'], tabBtns=[...document.querySelectorAll('.tabs [role=tab]')];
+const kbCard=document.getElementById('kbCard');
+let curTab=null;
 function showTab(name,focus){
   if(!TABS.includes(name)) name='intro';
-  if(curTab==='player'&&name!=='player'&&typeof stop==='function'){ stop(); endDrill(); }
+  if(curTab&&name!==curTab&&typeof stop==='function'){ stop(); endDrill(); }
   curTab=name;
   tabBtns.forEach(b=>{ const on=b.dataset.tab===name; b.setAttribute('aria-selected',String(on)); b.tabIndex=on?0:-1; if(on&&focus) b.focus(); });
   TABS.forEach(t=>document.getElementById('p-'+t).hidden=t!==name);
-  if(name==='player'&&!centered){ centered=true; requestAnimationFrame(center); }
+  if(name==='player'||name==='practice'){ // one keyboard, shown in whichever of the two tabs is open
+    const panel=document.getElementById('p-'+name); if(panel.firstElementChild!==kbCard) panel.prepend(kbCard); requestAnimationFrame(center); }
   try{ localStorage.setItem('lastTab',name); history.replaceState(null,'','#'+name); }catch(e){}
   window.scrollTo(0,0);
 }
