@@ -1,0 +1,29 @@
+{
+  "name": "Piano Tab Trainer",
+  "short_name": "Piano Tabs",
+  "description": "Play letter-note piano tabs and MIDI files on a 61-key keyboard, step by step.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#11141b",
+  "theme_color": "#1a2030",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
