@@ -134,6 +134,12 @@ input[type=range]{accent-color:var(--rh);width:140px}
 .cheat code{color:var(--rh);white-space:nowrap}
 
 /* drill */
+.panel{display:grid;gap:22px;min-width:0}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:4px;padding:5px;margin-block:-4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs [role=tab]{flex:1 0 auto;border:none;background:transparent;color:var(--muted);font:700 15px/1 var(--f-display);padding:12px 16px;border-radius:8px;white-space:nowrap}
+.tabs [role=tab]:hover{color:var(--ink);background:var(--bg)}
+.tabs [role=tab][aria-selected="true"]{background:var(--ink);color:var(--surface)}
 .chord-groups{display:grid;gap:10px}
 .cgroup{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .cgroup .glabel{font:600 11px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);width:6.5em}
@@ -162,6 +168,13 @@ input[type=range]{accent-color:var(--rh);width:140px}
     <p class="lede">Read piano like you read guitar tabs: a note letter plus an octave number. Paste letter notes from any tutorial, then watch the keys light up and play along at your own speed.</p>
   </header>
 
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" id="t-intro" aria-controls="p-intro" data-tab="intro">Intro</button>
+    <button type="button" role="tab" id="t-player" aria-controls="p-player" data-tab="player">Player</button>
+    <button type="button" role="tab" id="t-chords" aria-controls="p-chords" data-tab="chords">Chords Showdown</button>
+  </nav>
+
+  <div class="panel" id="p-intro" role="tabpanel" aria-labelledby="t-intro">
   <section class="card guide" aria-labelledby="g1">
     <div style="display:grid;gap:12px;min-width:0">
       <div class="eyebrow">Step one</div>
@@ -173,11 +186,29 @@ input[type=range]{accent-color:var(--rh);width:140px}
         <li>From C, the white keys go <span class="mono">C D E F G A B</span>, then C again.</li>
       </ol>
       <p class="muted" id="midHelp"></p>
-      <div class="row"><button id="showC" type="button">Light up every C below</button></div>
+      <div class="row"><button id="showC" type="button">Show every C on my keyboard</button></div>
     </div>
     <div class="mini-wrap"><div class="kb mini" id="mini" aria-label="Two octaves with every note labelled"></div></div>
   </section>
 
+  <section class="card" aria-labelledby="c1">
+    <div class="eyebrow">Step two</div>
+    <h2 id="c1">Reading a tab</h2>
+    <p class="muted" style="max-width:66ch">Piano tabs here work like guitar tabs: instead of string and fret, each note is a letter plus an octave number. Everything you need:</p>
+    <div class="cheat">
+      <code>C4</code><span>Note C in octave 4 (middle C). Some keyboard manuals, including Yamaha's, call this C3.</span>
+      <code>F#3 Bb3</code><span>Black keys: # is the one to the right, b the one to the left</span>
+      <code>-</code><span>Hold the previous note one more beat</span>
+      <code>.</code><span>Rest (silence) for one beat</span>
+      <code>C3+E3+G3</code><span>Play several notes together (a chord)</span>
+      <code>|</code><span>Bar line, just for reading</span>
+      <code>RH: / LH:</code><span>Right-hand and left-hand lines</span>
+    </div>
+    <div class="row"><button class="primary" type="button" data-go="player">Open the player</button></div>
+  </section>
+  </div>
+
+  <div class="panel" id="p-player" role="tabpanel" aria-labelledby="t-player" hidden>
   <section class="card" aria-label="Keyboard">
     <div class="picker">
       <label for="size">Your keyboard</label>
@@ -208,6 +239,7 @@ input[type=range]{accent-color:var(--rh);width:140px}
       </div>
       <div class="row" style="gap:16px">
         <span class="muted" id="snd" style="font-size:14px">Sound: tap a key to start</span>
+        <label class="chk"><input type="checkbox" id="cHi"> Highlight every C</label>
         <label class="chk"><input type="checkbox" id="names"> Show every note name</label>
       </div>
     </div>
@@ -257,25 +289,16 @@ input[type=range]{accent-color:var(--rh);width:140px}
         </div>
       </section>
 
-      <section class="card" aria-labelledby="c1">
-        <h2 id="c1">Tab format</h2>
-        <div class="cheat">
-          <code>C4</code><span>Note C in octave 4 (middle C). Some keyboard manuals, including Yamaha's, call this C3.</span>
-          <code>F#3 Bb3</code><span>Black keys: # is the one to the right, b the one to the left</span>
-          <code>-</code><span>Hold the previous note one more beat</span>
-          <code>.</code><span>Rest (silence) for one beat</span>
-          <code>C3+E3+G3</code><span>Play several notes together (a chord)</span>
-          <code>|</code><span>Bar line, just for reading</span>
-          <code>RH: / LH:</code><span>Right-hand and left-hand lines</span>
-        </div>
-      </section>
     </div>
   </div>
 
+  </div>
+
+  <div class="panel" id="p-chords" role="tabpanel" aria-labelledby="t-chords" hidden>
   <section class="card" aria-labelledby="ch1">
     <div class="eyebrow">Harmony</div>
     <h2 id="ch1">Common chords</h2>
-    <p class="muted" style="max-width:66ch">Tap a chord to hear it and see its keys. With your right hand, play a three-note chord with your thumb, middle finger and little finger. The same chords are lit on the big keyboard above.</p>
+    <p class="muted" style="max-width:66ch">Tap a chord to hear it and see its keys. With your right hand, play a three-note chord with your thumb, middle finger and little finger. The chord is also lit on your full keyboard in the Player tab.</p>
     <div class="chord-groups" id="common"></div>
     <div class="picker">
       <label for="root">Any chord</label>
@@ -298,6 +321,8 @@ input[type=range]{accent-color:var(--rh);width:140px}
       <div class="mini-wrap chord-kb"><div class="kb mini" id="chordKb" aria-label="Chord keys"></div></div>
     </div>
   </section>
+  </div>
+
 
   <footer class="muted" style="font-size:13px">Piano sound: <a href="https://github.com/Tonejs/audio/tree/master/salamander" style="color:inherit">Salamander Grand Piano</a> by Alexander Holm, licensed <a href="https://creativecommons.org/licenses/by/3.0/" style="color:inherit">CC BY 3.0</a>.</footer>
 </div>
@@ -429,8 +454,30 @@ document.getElementById('applyRange').addEventListener('click',()=>{
 describeRange(); syncPicker();
 
 document.getElementById('names').addEventListener('change',e=>kbEl.classList.toggle('names',e.target.checked));
-const showC=document.getElementById('showC');
-showC.addEventListener('click',()=>{ const on=kbEl.classList.toggle('show-c'); showC.textContent=on?'Hide the C highlight':'Light up every C below'; if(on) scroller.parentElement.scrollIntoView({behavior:'smooth',block:'center'}); });
+const showC=document.getElementById('showC'), cHi=document.getElementById('cHi');
+cHi.addEventListener('change',()=>kbEl.classList.toggle('show-c',cHi.checked));
+showC.addEventListener('click',()=>{ cHi.checked=true; kbEl.classList.add('show-c'); showTab('player'); scroller.parentElement.scrollIntoView({block:'center'}); });
+
+/* tabs */
+const TABS=['intro','player','chords'], tabBtns=[...document.querySelectorAll('.tabs [role=tab]')];
+let curTab=null, centered=false;
+function showTab(name,focus){
+  if(!TABS.includes(name)) name='intro';
+  if(curTab==='player'&&name!=='player'&&typeof stop==='function'){ stop(); endDrill(); }
+  curTab=name;
+  tabBtns.forEach(b=>{ const on=b.dataset.tab===name; b.setAttribute('aria-selected',String(on)); b.tabIndex=on?0:-1; if(on&&focus) b.focus(); });
+  TABS.forEach(t=>document.getElementById('p-'+t).hidden=t!==name);
+  if(name==='player'&&!centered){ centered=true; requestAnimationFrame(center); }
+  try{ localStorage.setItem('lastTab',name); history.replaceState(null,'','#'+name); }catch(e){}
+  window.scrollTo(0,0);
+}
+tabBtns.forEach((b,i)=>{
+  b.addEventListener('click',()=>showTab(b.dataset.tab));
+  b.addEventListener('keydown',e=>{ const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0; if(!d)return; e.preventDefault();
+    showTab(tabBtns[(i+d+tabBtns.length)%tabBtns.length].dataset.tab,true); });
+});
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.go)));
+window.addEventListener('hashchange',()=>{ const h=location.hash.slice(1); if(TABS.includes(h)&&h!==curTab) showTab(h); });
 
 /* parsing */
 function parseNote(s){ const r=/^([A-Ga-g])([#b]?)(\d)$/.exec(s); if(!r)return null;
@@ -682,6 +729,10 @@ function midiToTab(mid){
   const stepsPerMin=Math.round(60e6/mid.tempo*2);
   return {text:lines.join('\n').trim(), bpm:Math.min(240,Math.max(30,stepsPerMin)), bars, info};
 }
+
+/* open the right tab */
+(function(){ let t=location.hash.slice(1); if(!TABS.includes(t)){ try{ t=localStorage.getItem('lastTab'); }catch(e){} }
+  showTab(TABS.includes(t)?t:'intro'); })();
 })();
 </script>
 
