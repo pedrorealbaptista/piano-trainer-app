@@ -166,7 +166,10 @@ input[type=range]{accent-color:var(--rh);width:140px}
         <span><i class="dot" style="background:var(--lh)"></i>Left hand</span>
         <span><i class="dot" style="background:var(--cmark)"></i>Middle C</span>
       </div>
-      <label class="chk"><input type="checkbox" id="names"> Show every note name</label>
+      <div class="row" style="gap:16px">
+        <span class="muted" id="snd" style="font-size:14px">Sound: tap a key to start</span>
+        <label class="chk"><input type="checkbox" id="names"> Show every note name</label>
+      </div>
     </div>
     <div class="kb-scroll" id="kbScroll"><div class="kb main" id="kb"></div></div>
     <p class="muted" style="font-size:14px">Click or tap any key to hear it. On a phone, swipe the keyboard sideways.</p>
@@ -228,6 +231,8 @@ input[type=range]{accent-color:var(--rh);width:140px}
       </section>
     </div>
   </div>
+
+  <footer class="muted" style="font-size:13px">Piano sound: <a href="https://github.com/Tonejs/audio/tree/master/salamander" style="color:inherit">Salamander Grand Piano</a> by Alexander Holm, licensed <a href="https://creativecommons.org/licenses/by/3.0/" style="color:inherit">CC BY 3.0</a>.</footer>
 </div>
 
 <script>
@@ -244,8 +249,28 @@ const LO=36,HI=96,MIDC=60;
 
 /* audio */
 let ctx,master;
-function audio(){ if(!ctx){ ctx=new (window.AudioContext||window.webkitAudioContext)(); master=ctx.createGain(); master.gain.value=.45; master.connect(ctx.destination);} if(ctx.state==='suspended')ctx.resume(); return ctx;}
-function tone(m,dur){ const a=audio(),t=a.currentTime,f=440*Math.pow(2,(m-69)/12);
+function audio(){ if(!ctx){ ctx=new (window.AudioContext||window.webkitAudioContext)(); master=ctx.createGain(); master.gain.value=.45; master.connect(ctx.destination); loadSamples(); } if(ctx.state==='suspended')ctx.resume(); return ctx;}
+
+/* grand piano samples (Salamander Grand Piano, recorded every minor third) */
+const SAMPLE_NOTES=['A1','C2','Ds2','Fs2','A2','C3','Ds3','Fs3','A3','C4','Ds4','Fs4','A4','C5','Ds5','Fs5','A5','C6','Ds6','Fs6','A6','C7','Ds7','Fs7','A7','C8'];
+const buffers=new Map(); const sndEl=document.getElementById('snd');
+function sampleMidi(n){ const r=/^([A-G])(s?)(\d)$/.exec(n); return 12*(+r[3]+1)+PC[r[1]]+(r[2]?1:0); }
+function loadSamples(){ if(loadSamples.started)return; loadSamples.started=true; sndEl.textContent='Sound: loading piano…';
+  Promise.all(SAMPLE_NOTES.map(n=>fetch('samples/'+n+'.mp3')
+    .then(r=>{ if(!r.ok) throw new Error(); return r.arrayBuffer(); })
+    .then(b=>new Promise((res,rej)=>ctx.decodeAudioData(b,res,rej)))
+    .then(buf=>buffers.set(sampleMidi(n),buf)).catch(()=>{})))
+  .then(()=>{ sndEl.textContent=buffers.size?'Sound: grand piano':'Sound: simple tone'; });
+}
+function nearest(m){ let best=null,bd=1e9; buffers.forEach((_,k)=>{ const d=Math.abs(k-m); if(d<bd){bd=d;best=k;} }); return best; }
+function tone(m,dur){ const a=audio();
+  if(buffers.size){ const k=nearest(m), t=a.currentTime, src=a.createBufferSource(), g=a.createGain();
+    src.buffer=buffers.get(k); src.playbackRate.value=Math.pow(2,(m-k)/12);
+    const len=Math.max(dur,.3);
+    g.gain.setValueAtTime(.9,t); g.gain.setValueAtTime(.9,t+len); g.gain.exponentialRampToValueAtTime(.001,t+len+.45);
+    src.connect(g); g.connect(master); src.start(t); src.stop(t+len+.5); return; }
+  synth(m,dur); }
+function synth(m,dur){ const a=audio(),t=a.currentTime,f=440*Math.pow(2,(m-69)/12);
   const g=a.createGain(); g.connect(master);
   const len=Math.max(dur,.35);
   g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.32,t+.006);

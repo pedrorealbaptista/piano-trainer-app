@@ -14,3 +14,7 @@ TIPS
   - No sound? Turn off the silent switch on the side of the iPhone.
   - Save .mid or .txt tabs to the Files app, then use "Open a file" in the trainer.
   - Turn the phone sideways to see more of the keyboard.
+
+CREDITS
+  Piano sound: Salamander Grand Piano by Alexander Holm, CC BY 3.0
+  (https://creativecommons.org/licenses/by/3.0/). See samples/SALAMANDER-README.txt.
